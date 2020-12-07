@@ -1,0 +1,50 @@
+import bs4 as bs
+import urllib.request
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
+
+df_ga = pd.read_csv('urls_recommender_nov.csv', sep = ';')
+df_ga['Page'] = df_ga['Page'].str.lower()
+search ="/items/nl-nl/vacatures/"
+bool_series = df_ga["Page"].str.startswith(search, na = False) 
+df_ga = df_ga[bool_series]
+df_ga['Cat'] = df_ga['Page'].str.split('/').str[4]
+vakgebieden = ['data-en-analytics' , 'it', 'ict', 'traineeship']
+booly = df_ga['Cat'].isin(vakgebieden)
+df_ga = df_ga[booly]
+df_ga['Url'] = "https://www.#######.nl"+ df_ga["Page"] 
+list_url = df_ga['Url'].tolist()
+
+#list_url = ["https://www.#########.nl/items/nl-nl/vacatures/it/integratie-tester-den-haag", "https://www.#######.nl/items/nl-nl/vacatures/it/support-engineer-apps-den-haag"]
+ListNummer = 0
+ListTotaal = []
+
+
+for x in list_url:
+    try:
+        source = urllib.request.urlopen(x).read()
+        soup = bs.BeautifulSoup(source,'lxml')
+        title = soup.title.string
+        ListNaam = "Vacature" + str(ListNummer)
+        ListNummer = ListNummer + 1
+        #print(title, "boven loop")
+        for div in soup.find_all('span', class_ = 'extText'):
+            Listy = []
+            Listy.append(ListNaam)
+            Listy.append(str(title))
+            #print(title, "Onderloop")
+            Listy.append(div.text)
+            #print('Scraping succesfull')
+    except:
+        print(x, 'Scraping failed - URL not found.')
+        
+    ListTotaal.append(Listy)
+#print(ListTotaal)
+
+
+df_tekst = pd.DataFrame(ListTotaal, columns =['Nummer', 'Vacture', 'Tekst'])
+df_tekst = df_tekst.drop_duplicates(subset = 'Nummer', keep = 'first')
+
+df_tekst.head()
