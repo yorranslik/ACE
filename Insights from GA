@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+
+df_ga = pd.read_csv('GA_raw_pv.csv', sep = ';')
+#df_ga = pd.read_csv('GA_raw_pv.csv', sep = ';')
+df_ga = pd.read_csv('evelien_demo_1.csv', sep = ';')
+df_ga['Page'] = df_ga['Page'].str.lower()
+search ="/items/nl-nl/vacatures/"
+bool_series = df_ga["Page"].str.startswith(search, na = False) 
+df_ga = df_ga[bool_series] 
+df_ga['Cat'] = df_ga['Page'].str.split('/').str[4]
+df_ga['Product_raw'] = df_ga['Page'].str.split('/').str[5]
+df_ga['Product'] = df_ga['Product_raw'].replace('-', ' ', regex = True)
+
+df_ga['Product'] = df_ga['Product'].str.replace('(?:E|hoofddorp|amsterdam|standplaats|lelystad|groningen|utrecht|wolfheze|meppel|harderwijk|geldrop|assen|den haag|ln)', '')
+#####################
+# vakgebieden = ['data-en-analytics' , 'it', 'ict', 'traineeship']
+# booly = df_ga['Cat'].isin(vakgebieden)
+# df_ga = df_ga[booly]
+# df_ga.head()
+df_ga.to_csv('demo_evelien.csv')
+###############################
+
+df_ga = pd.read_csv('GA_raw_pv_1.csv', sep = ';')
+#df_ga['Page'] = df_ga['Page'].str.lower()
+
+search ="/items/nl-nl/vacatures/"
+bool_series = df_ga["Page"].str.startswith(search, na = False) 
+df_ga = df_ga[bool_series] 
+
+df_ga['Cat'] = df_ga['Page'].str.split('/').str[4]
+df_ga['Product_raw'] = df_ga['Page'].str.split('/').str[5]
+df_ga['Product'] = df_ga['Product_raw'].replace('-', ' ', regex = True)
+df_ga['Product'] = df_ga['Product'].str.replace('(?:E|hoofddorp|amsterdam|standplaats|lelystad|groningen|utrecht|wolfheze|meppel|harderwijk|geldrop|assen|den haag|ln)', '')
+
+vakgebieden = ['data-en-analytics' , 'it', 'ict', 'traineeship']
+booly = df_ga['Cat'].isin(vakgebieden)
+df_ga = df_ga[booly]
+df_ga.head()
+
+import pandas as pd
+df_ga2 = pd.read_csv('GA_raw_pv_2.csv', sep = ';')
+df_ga2['Page'] = df_ga2['Page'].str.lower()
+
+search ="/items/nl-nl/vacatures/"
+bool_series = df_ga["Page"].str.startswith(search, na = False) 
+df_ga = df_ga[bool_series]
+
+df_ga2['Cat'] = df_ga2['Page'].str.split('/').str[4]
+df_ga2['Product_raw'] = df_ga2['Page'].str.split('/').str[5]
+df_ga2['Product'] = df_ga2['Product_raw'].replace('-', ' ', regex = True)
+df_ga2['Product'] = df_ga2['Product'].str.replace('(?:E|hoofddorp|amsterdam|standplaats|s gravenhage|lelystad|groningen|utrecht|wolfheze|meppel|harderwijk|geldrop|assen|den haag|ln)', '')
+
+vakgebieden = ['data-en-analytics' , 'it', 'ict', 'traineeship']
+booly = df_ga2['Cat'].isin(vakgebieden)
+df_ga2 = df_ga2[booly]
+df_ga2
+
+listy = (df_ga, df_ga2, df_ga3, df_ga4, df_ga5, df_ga6)
+df_totaal = pd.concat(listy)
+df_totaal = df_totaal[['Product', 'Cat', 'Source', 'Page Views', 'Users']]
+#df_totaal.to_csv('GA_raw_full.csv')
+
+
+
+
+
+
+
+
+
+
