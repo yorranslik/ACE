@@ -73,6 +73,16 @@ stopwords.extend(['anwb', 'demo2', 'jij', 'heb', 'als'] )
 #Stopword removal
 df_tekst['Stopaf'] = df_tekst['Los'].apply(lambda x: ' '.join([word for word in x[0].split() if word not in (stopwords)]))
 
+# However, for the next sectopn, it needs to be in a nested list, or single list per cell. Hence, we add the content of every
+# cell to list with a quick function.
+def tolistor(x):
+    listy = []
+    listy.append(x)
+    return listy
+
+df_tekst['Stopaf'] = df_tekst['Stopaf'].apply(tolistor)
+
+# Now we can safely continue
 # Stemming
 
 from nltk.stem.snowball import SnowballStemmer
