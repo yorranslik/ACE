@@ -83,7 +83,7 @@ from nltk.stem.snowball import SnowballStemmer
 # Import Dutch stemmer.
 stemmer = SnowballStemmer("dutch")
 
-df_tekst['Stemmed'] = df_tekst['Los'].apply(lambda x: [stemmer.stem(y) for y in x]) # Stem every word.
+df_tekst['Stemmed'] = df_tekst['Stopaf'].apply(lambda x: [stemmer.stem(y) for y in x]) # Stem every word.
 
 
 # Extract text from list and insert it back into the DF with a function. 
