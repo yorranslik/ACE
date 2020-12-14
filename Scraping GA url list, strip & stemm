@@ -16,6 +16,7 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 
 # Scrape demo content using url list without the company name in it!
+# Be Aware! the very first URLS has to be a working one, otherwise the Listy list is not found! 
 df_ga = pd.read_csv('urls_recommender_nov.csv', sep = ';')
 df_ga['Page'] = df_ga['Page'].str.lower()
 search ="/items/nl-nl/vacatures/"
@@ -31,7 +32,7 @@ list_url = df_ga['Url'].tolist()
 ListNummer = 0
 ListTotaal = []
 
-
+# Be Aware! the very first URLS has to be a working one, otherwise the Listy list is not found! 
 for x in list_url:
     try:
         source = urllib.request.urlopen(x).read()
