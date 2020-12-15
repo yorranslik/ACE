@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 # Imports
 import bs4 as bs
 import urllib.request
@@ -12,12 +18,15 @@ import numpy as np
 import networkx as nx
 
 import nltk
+nltk.download('wordnet')
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 
+import seaborn as sns
+
 # Scrape demo content using url list without the company name in it!
 # Be Aware! the very first URLS has to be a working one, otherwise the Listy list is not found! 
-df_ga = pd.read_csv('urls_recommender_nov.csv', sep = ';')
+df_ga = pd.read_csv('urls_recommender_dec.csv', sep = ';')
 df_ga['Page'] = df_ga['Page'].str.lower()
 search ="/items/nl-nl/vacatures/"
 bool_series = df_ga["Page"].str.startswith(search, na = False) 
@@ -32,7 +41,6 @@ list_url = df_ga['Url'].tolist()
 ListNummer = 0
 ListTotaal = []
 
-# Be Aware! the very first URLS has to be a working one, otherwise the Listy list is not found! 
 for x in list_url:
     try:
         source = urllib.request.urlopen(x).read()
@@ -96,12 +104,111 @@ stemmer = SnowballStemmer("dutch")
 
 df_tekst['Stemmed'] = df_tekst['Stopaf'].apply(lambda x: [stemmer.stem(y) for y in x]) # Stem every word.
 
-
 # Extract text from list and insert it back into the DF with a function. 
 def selector(x):
     return x[0]
 
 df_tekst['Stemmed'] = df_tekst['Stemmed'].apply(selector)
 
+
+# lemmatization English!
+w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
+lemmatizer = nltk.stem.WordNetLemmatizer()
+
+def lemmatize_text(text):
+    return [lemmatizer.lemmatize(w) for w in w_tokenizer.tokenize(text)]
+
+df_tekst['Lemma'] = df_tekst['Stemmed'].apply(lemmatize_text)
+
+# Get them out of the list
+def selector(x):
+    s = ' '.join(x)
+    return s
+
+df_tekst['processed'] = df_tekst['Lemma'].apply(selector)
+
 # Display df
 df_tekst.head()
+
+########## WIP ###################
+# Extract text from list and insert it back into the DF with a function. 
+# def selector(x):
+#     s = ' '.join(x)
+#     return s
+
+# df_tekst['processed'] = df_tekst['Lemma'].apply(selector)
+
+#df_tekst.head()
+
+# Do the cosine calculations for all available ids. 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
+
+tf = TfidfVectorizer(analyzer='word',ngram_range=(1, 2),min_df=0, stop_words='english')
+tfidf_matrix = tf.fit_transform(df_tekst['processed'])
+
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+
+# Restructure the index of the df for further visualisation. 
+df_tekst = df_tekst.reset_index(drop = True)
+df_tekst['Nummer'] = df_tekst.index 
+df_tekst.drop('Number', axis = 1, inplace = True)
+df_cos = pd.DataFrame(cosine_sim)
+
+
+# Plotting the vacancies. 
+
+fig = plt.figure(figsize=(15,10))
+plt.title("Cosine distance between vacancies")
+sns.heatmap(df_cos, cmap="Accent_r", annot=True, )
+
+#YlGnBu
+
+
+## GEtting to the best possible match per ID
+
+
+# Lets create a quick df that we can use later to combine with our predictions. 
+df_title = df_tekst['Vacture']
+df_title = pd.DataFrame(df_title)
+merged =  df_cos.merge(df_title, left_index=True, right_index= True)
+
+
+def get_closest(df, col, topx):
+    ''' This function allows you get the top x number of similair job vacancies based on cosine.
+        Insert the DF name with cosines distances;
+        the index of the job;
+        the top (n).
+        Be aware that a very high similairy may not be good, as this can be the same vacancy but in a different catagory.
+    '''
+    print('De top ', topx, ' aansluitende vacatures voor: ', df_tekst['Vacture'][col].split('-', 1)[-1].lstrip())
+    new = pd.DataFrame(df[col].nlargest(topx + 3)).merge(df_title, left_index = True, right_index = True)
+    title = df_tekst['Vacture'][col].split('-', 1)[-1].lstrip()
+    new[str(title)] = new[col]
+    new = new[['Vacture', str(title)]].drop_duplicates()
+    return new.sort_values(by=[str(title)], ascending = False).head(topx)
+    if topx < len(df):
+        print("Could not show", topx, 'examples, as there is not such an amount of data!')
+
+
+# Pcik your ID from the list below, and use the function to get the next top recommendations.
+df_title
+
+# The function below gives you the top x for every vacancy!
+topx = None
+while topx is None:
+    try:
+        topx = int(input("Enter the top x you want: "))
+    except ValueError:
+        print('Enter an integer value! Foei')
+vac = None
+while vac is None:
+    try:
+        vac = int(input("Enter the Vacature ID: "))
+    except ValueError:
+        print('Enter a vacature ID from the list above!')
+        
+get_closest(df_cos, vac, topx)
+
+
+
