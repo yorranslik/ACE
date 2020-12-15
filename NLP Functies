@@ -1,0 +1,226 @@
+def my_parse(text,
+             tokenize = True,
+                 tags = True,
+               chunks = True,
+            relations = True,
+              lemmata = True,
+             encoding = 'utf-8',
+              tagset = None):
+    """A fix for the "parse" function in the pattern package specifically aimed at fixing the Dutch part-of-speech tagging.
+    Parameters
+    ----------
+    For the exact details on the input arguments (with exceptions of "text") please check the pattern.nl docs.
+    
+    text : str
+    	A string on which should have a Part-Of-Speech tagging should be performed.
+    tags : bool
+    	Split punctuation marks from words. (default: True)
+    chunks : bool
+    	Parse part-of-speech tags. (default: True)
+    relations : bool
+    	Parse chunks. (default: True)
+    lemmata : bool
+    	Parse chunk relations. (default: True)
+    encoding : str
+    	Input string encoding. (default: 'utf-8')
+    tagset : str
+    	Penn Treebank II (default: None) or 'UNIVERSAL'.
+    
+    Returns
+    -------
+    A parsed in the form of "parse" from pattern
+    """
+    try:
+        parsed_text = parse(text,
+                             tokenize = tokenize,
+                                 tags = tags,
+                               chunks = chunks,
+                            relations = relations,
+                              lemmata = lemmata,
+                             encoding = encoding,
+                              tagset = tagset)
+    except:
+        parsed_text = my_parse(text,
+                             tokenize = tokenize,
+                                 tags = tags,
+                               chunks = chunks,
+                            relations = relations,
+                              lemmata = lemmata,
+                             encoding = encoding,
+                               tagset = tagset)
+    return parsed_text
+
+def my_parsetree(text,
+             tokenize = True,
+                 tags = True,
+               chunks = True,
+            relations = True,
+              lemmata = True,
+             encoding = 'utf-8',
+               tagset = None):
+    """A fix for the "parsetree" function in the pattern package specifically aimed at fixing the Dutch part-of-speech tagging.
+    Parameters
+    ----------
+    For the exact details on the input arguments (with exceptions of "text") please check the pattern.nl docs.
+    
+    text : str
+    	A string on which should have a Part-Of-Speech tagging should be performed.
+    tags : bool
+    	Split punctuation marks from words. (default: True)
+    chunks : bool
+    	Parse part-of-speech tags. (default: True)
+    relations : bool
+    	Parse chunks. (default: True)
+    lemmata : bool
+    	Parse chunk relations. (default: True)
+    encoding : str
+    	Input string encoding. (default: 'utf-8')
+    tagset : str
+    	Penn Treebank II (default: None) or 'UNIVERSAL'.
+    
+    Returns
+    -------
+    A parsed in the form of "parsetree" from pattern
+    """
+    try:
+        parsed_text = parsetree(text,
+                             tokenize = tokenize,
+                                 tags = tags,
+                               chunks = chunks,
+                            relations = relations,
+                              lemmata = lemmata,
+                             encoding = encoding,
+                               tagset = tagset)
+    except:
+        parsed_text = my_parsetree(text,
+                             tokenize = tokenize,
+                                 tags = tags,
+                               chunks = chunks,
+                            relations = relations,
+                              lemmata = lemmata,
+                             encoding = encoding,
+                               tagset = tagset)
+    return parsed_text
+
+
+def tag_filter(text, tagset, return_lemma=True):
+    """Solely extract a specific type of words according to the Penn Treebank II Part-Of-Speech tags from a piece of text.
+
+     Parameters
+     ----------
+     text : str
+     	The string on which to perform the filter.
+     tagset : list
+     	A list with POS tags corresponding to the Penn Treebank II set.
+     return_lemma : bool
+     	Return the lemmatization of the original text in case it is set to 'True'. Or return the original text in case it is set to 'False'. (default: True)
+
+     Returns
+     -------
+     str
+     	A string which contains only the type of words provided in the 'tagset'."""
+    if not text:
+    	return ''
+
+    patternparse = my_parse(text, chunks=False, relations=False)
+    if return_lemma == True:
+        extraction = [word[-1] if word[1] in tagset else '' for sentence in patternparse.split() for word in sentence]
+    elif return_lemma == False:
+        extraction = [word[0] if word[1] in tagset else '' for sentence in patternparse.split() for word in sentence]
+    else:
+        raise ValueError("The input argument 'return_lemma' is not a boolean, please provide either 'True' or 'False' instead of '{}'.".format(lemma))
+    return_text = ' '.join(word for word in extraction if word != '')
+    return return_text
+
+
+def get_tagset(type_of_words):
+    """Gives the tagset corresponding to the Part-Of-Speech tagging conforming the Penn Treebank II POS tags.
+
+    Parameters
+    ----------
+    choice_of_tagset : list / str
+    	Specifies the tag(s) you would like to recieve the tagset for. Either provide a string or list. The possible choices are: 'nouns', 'adjectives', 'pronouns', 'adverbs', 'verbs'
+
+    Returns
+    -------
+    list
+    	A list of tags which correspond with the provided choice(s) of tagset(s)."""
+    tagset_dictionary = {
+        'nouns': ['NN', 'NNS', 'NNP', 'NNPS'],
+        'adjectives': ['JJ', 'JJR', 'JJS'],
+        'pronouns': ['PRP', 'PRP$'],
+        'adverbs': ['RB', 'RBR', 'RBS', 'RP'],
+        'verbs': ['VB', 'VBZ', 'VBP', 'VBD', 'VBN', 'VBG', 'MD']
+    }
+    if type(type_of_words) == str:
+        type_of_words = [type_of_words]
+    assert type(type_of_words) == list, 'Please provide either a string or list of strings as input.'
+    tagset = []
+    for wordtype in type_of_words:
+        assert type(wordtype) == str, "The tag '{}' is not a string, please provide each tag as a separate string.".format(
+            str(wordtype))
+        assert wordtype in tagset_dictionary, "The tag: '{}' that you have provided is not in the possible choices of tags, please provide one or multiple of the following tags: 'nouns', 'adjectives', 'pronouns', 'adverbs', 'verbs'".format(
+            wordtype)
+        tagset += tagset_dictionary[wordtype]
+    return tagset
+
+
+
+
+def extract_POS(df, col):
+    '''
+    Description: function that extracts Parts Of Speech: 
+    nouns, verbs, adjectives and "extra verbs" from text column in dataframe and adds all this information to the dataframe.
+    1. "verbs" are all found verbs, conjugated to first person present tense
+    2. "extra verbs" are all found verbs, conjugated to second person present tense, filtered on "verbs",
+    then conjugated to first person present tense again
+    3. verbs and extra verbs are combined to 1 column "verbs"
+    ""
+
+    Example: df[col] == "wij eten lekkere taart"
+    Returns: df[['verbs', 'nouns', 'adjectives']] = "eet" | "taart" | "lekkere"
+
+    param df: dataframe
+    type df: dataframe object
+
+    param col: column name
+    type col: str
+
+    return: dataframe with extra columns (nouns, adjectives, verbs, extra verbs) appended to it
+    return type: dataframe object
+    '''
+
+    # part of speech tagging: extract nouns, verbs, adjectives
+    noun_tagset = get_tagset('nouns')
+    verb_tagset = get_tagset('verbs')
+    adjective_tagset = get_tagset('adjectives')
+
+    df['nouns'] = df[col].apply(lambda x: tag_filter(str(x), noun_tagset))
+    df['verbs'] = df[col].apply(lambda x: tag_filter(str(x), verb_tagset))
+    df['adjectives'] = df[col].apply(
+        lambda x: tag_filter(
+            str(x), adjective_tagset))
+
+    # ---- extra step/workaround to get more verbs from text ----
+    # conjugate the found verbs to their stem
+    df['verbs'] = df['verbs'].apply(lambda x: ' '.join(
+        [conjugate_nl(verb, tense="present", person=1) for verb in x.split(' ')]))
+    # conjugate all words to second person
+    df['extra_verbs'] = df[col].apply(lambda x: ' '.join(
+        [conjugate_nl(verb, tense="present", person=2) for verb in x.split(' ')]))
+
+    # filter verbs
+    df['extra_verbs'] = df.extra_verbs.apply(
+        lambda x: tag_filter(str(x), verb_tagset))
+
+    # conjugate to first person
+    df['extra_verbs'] = df['extra_verbs'].apply(lambda x: ' '.join(
+        [conjugate_nl(verb, tense="present", person=1) for verb in x.split(' ')]))
+
+    df['verbs'] = df['verbs'] + ' ' + df['extra_verbs']
+    df.drop(['extra_verbs'], axis=1, inplace=True)
+
+    return df
+
+
+extract_POS(df_tekst, 'processed')
